@@ -1,18 +1,29 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { DAYS, DEFAULT_INFO } from '../../data/business'
-import { useInfo, logActivity } from '../../lib/store'
+import { useInfo } from '../../lib/store'
+import { backend } from '../../lib/backend'
 import { isValidPhone } from '../../lib/format'
 
-export default function InfoEditor({ user }) {
-  const [info, setInfo] = useInfo()
+export default function InfoEditor() {
+  const [info, { loading }] = useInfo()
   const [f, setF] = useState(info)
   const [msg, setMsg] = useState('')
   const [err, setErr] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  // Fill the form once the saved info arrives (Supabase loads asynchronously).
+  const filled = useRef(!loading)
+  useEffect(() => {
+    if (!loading && !filled.current) {
+      filled.current = true
+      setF(info)
+    }
+  }, [loading, info])
 
   const setDay = (d, k, v) => setF((x) => ({ ...x, hours: { ...x.hours, [d]: { ...x.hours[d], [k]: v } } }))
   const setAddr = (k) => (e) => setF((x) => ({ ...x, address: { ...x.address, [k]: e.target.value } }))
 
-  function save(e) {
+  async function save(e) {
     e.preventDefault()
     setMsg('')
     if (f.phone && !/^\[.*\]$/.test(f.phone) && !isValidPhone(f.phone)) return setErr('Phone should be a 10-digit number.')
@@ -28,11 +39,19 @@ export default function InfoEditor({ user }) {
     if (f.announcement !== info.announcement) changed.push(f.announcement ? `banner → "${f.announcement}"` : 'banner removed')
     if (!changed.length) return setMsg('Nothing changed.')
 
-    // TODO(production): upsert into the Supabase (or Firebase) store_info row.
-    setInfo(f)
-    logActivity(user.name, `Updated ${changed.join('; ')}`)
-    setMsg('Saved. The website is updated.')
+    setSaving(true)
+    try {
+      await backend.saveInfo(f)
+      await backend.logActivity(`Updated ${changed.join('; ')}`)
+      setMsg('Saved. The website is updated.')
+    } catch (error) {
+      setErr(`Couldn't save: ${error.message}`)
+    } finally {
+      setSaving(false)
+    }
   }
+
+  if (loading) return <div className="skeleton h-96" aria-busy="true" />
 
   return (
     <form onSubmit={save} className="grid gap-6" aria-labelledby="info-title">
@@ -91,7 +110,7 @@ export default function InfoEditor({ user }) {
       {err && <p role="alert" className="text-racing">{err}</p>}
       {msg && <p role="status" className="text-green-400">{msg}</p>}
       <div className="sticky bottom-0 -mx-4 flex gap-3 bg-asphalt/95 p-4 backdrop-blur sm:static sm:mx-0 sm:bg-transparent sm:p-0">
-        <button className="btn-red flex-1 text-2xl">Save Changes</button>
+        <button className="btn-red flex-1 text-2xl" disabled={saving}>{saving ? 'Saving…' : 'Save Changes'}</button>
         <button type="button" onClick={() => { setF({ ...DEFAULT_INFO, phone: f.phone, facebook: f.facebook }); setMsg('Defaults loaded. Press Save to apply.') }} className="btn-dark">Defaults</button>
       </div>
     </form>

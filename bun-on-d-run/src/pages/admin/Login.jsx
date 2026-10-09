@@ -1,18 +1,26 @@
 import { useState } from 'react'
 import Logo from '../../components/Logo'
 import Checkered from '../../components/Checkered'
-import { login } from './auth'
+import { backend } from '../../lib/backend'
+import { MODE } from '../../lib/store'
 
 export default function Login({ onLogin }) {
   const [u, setU] = useState('')
   const [p, setP] = useState('')
   const [err, setErr] = useState('')
+  const [busy, setBusy] = useState(false)
+  const real = MODE === 'supabase'
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault()
-    const s = login(u, p)
-    if (s) onLogin(s)
-    else setErr('Wrong username or password.')
+    setBusy(true)
+    setErr('')
+    try {
+      onLogin(await backend.signIn(u, p))
+    } catch (error) {
+      setErr(error.message)
+      setBusy(false)
+    }
   }
 
   return (
@@ -23,16 +31,16 @@ export default function Login({ onLogin }) {
           <Logo />
           <h1 className="font-display text-4xl tracking-wide">Pit Crew Login</h1>
           <div>
-            <label className="label" htmlFor="u">Username</label>
-            <input id="u" className="input" value={u} onChange={(e) => setU(e.target.value)} autoComplete="username" autoCapitalize="none" />
+            <label className="label" htmlFor="u">{real ? 'Email' : 'Username'}</label>
+            <input id="u" className="input" value={u} onChange={(e) => setU(e.target.value)} type={real ? 'email' : 'text'} autoComplete={real ? 'email' : 'username'} autoCapitalize="none" required />
           </div>
           <div>
             <label className="label" htmlFor="p">Password</label>
-            <input id="p" className="input" type="password" value={p} onChange={(e) => setP(e.target.value)} autoComplete="current-password" />
+            <input id="p" className="input" type="password" value={p} onChange={(e) => setP(e.target.value)} autoComplete="current-password" required />
           </div>
           {err && <p role="alert" className="text-sm text-racing">{err}</p>}
-          <button className="btn-red w-full text-2xl">Log In</button>
-          <p className="text-xs text-cream/40">Demo accounts: tim / demo123 (owner), manager / demo123 (web manager).</p>
+          <button className="btn-red w-full text-2xl" disabled={busy}>{busy ? 'Checking…' : 'Log In'}</button>
+          {!real && <p className="text-xs text-cream/40">Demo mode. Accounts: tim / demo123 (owner), manager / demo123 (web manager).</p>}
         </div>
       </form>
     </div>

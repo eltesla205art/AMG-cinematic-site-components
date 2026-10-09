@@ -1,15 +1,17 @@
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import Checkered from '../components/Checkered'
 import { CartTotals } from '../components/CartDrawer'
-import OrderMissing from './OrderMissing'
-import { useOrders } from '../lib/store'
+import OrderMissing, { OrderLoading } from './OrderMissing'
+import { orderPath, orderToken, useCustomerOrder } from '../lib/store'
 import { money, time } from '../lib/format'
 
 export default function Confirmation() {
   const { orderId } = useParams()
-  const [orders] = useOrders()
-  const order = orders.find((o) => o.id === orderId)
-  if (!order) return <OrderMissing id={orderId} />
+  const [params] = useSearchParams()
+  const token = orderToken(orderId, params.get('t'))
+  const { order, loading, error } = useCustomerOrder(orderId, token)
+  if (loading && !order) return <OrderLoading />
+  if (!order) return <OrderMissing id={orderId} error={error} />
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-10">
@@ -24,7 +26,7 @@ export default function Confirmation() {
             Estimated pickup: <strong>{order.pickup.asap ? `~${time(order.pickup.at)} (ASAP)` : time(order.pickup.at)}</strong>
           </p>
           <p className="text-cream/60">Name for pickup: {order.customer.name} · Pay at pickup</p>
-          <Link to={`/track/${order.id}`} className="btn-red mt-8 w-full text-3xl sm:w-auto sm:px-12">Track My Order</Link>
+          <Link to={orderPath('track', order.id, token)} className="btn-red mt-8 w-full text-3xl sm:w-auto sm:px-12">Track My Order</Link>
         </div>
         <div className="border-t border-white/10 p-6 sm:px-10">
           <h2 className="font-display text-3xl tracking-wide">Receipt</h2>

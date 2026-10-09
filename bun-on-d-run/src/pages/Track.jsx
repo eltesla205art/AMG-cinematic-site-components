@@ -1,8 +1,7 @@
-import { useEffect } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import OrderMissing from './OrderMissing'
-import { useInfo, useOrders } from '../lib/store'
-import { STATUSES, advanceDemo, statusIndex } from '../lib/orders'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
+import OrderMissing, { OrderLoading } from './OrderMissing'
+import { orderPath, orderToken, useCustomerOrder, useInfo } from '../lib/store'
+import { STATUSES, statusIndex } from '../lib/orders'
 import { time } from '../lib/format'
 import { fullAddress, mapsQuery } from '../data/business'
 
@@ -15,21 +14,15 @@ const COPY = {
 
 export default function Track() {
   const { orderId } = useParams()
-  const [orders] = useOrders()
+  const [params] = useSearchParams()
+  const token = orderToken(orderId, params.get('t'))
+  // Updates live: polled from Supabase every few seconds, or from this
+  // browser's storage in demo mode (which also auto-advances for the demo).
+  const { order, loading, error } = useCustomerOrder(orderId, token)
   const [info] = useInfo()
-  const order = orders.find((o) => o.id === orderId)
 
-  // Demo progression; real status changes from the owner dashboard arrive via
-  // the storage listener in useOrders().
-  // TODO(production): subscribe to this order over a WebSocket / Supabase realtime channel.
-  useEffect(() => {
-    if (!order?.simulate) return
-    advanceDemo(order.id)
-    const t = setInterval(() => advanceDemo(order.id), 2000)
-    return () => clearInterval(t)
-  }, [order?.id, order?.simulate])
-
-  if (!order) return <OrderMissing id={orderId} />
+  if (loading && !order) return <OrderLoading />
+  if (!order) return <OrderMissing id={orderId} error={error} />
 
   const steps = STATUSES.filter((s) => s.id !== 'completed')
   const current = statusIndex(order.status)
@@ -65,7 +58,7 @@ export default function Track() {
         <p><span className="text-cream/60">Where:</span> {fullAddress(info.address)}</p>
         <a href={`https://www.google.com/maps/dir/?api=1&destination=${mapsQuery(info.address)}`} target="_blank" rel="noreferrer" className="btn-ghost mt-4">Get Directions</a>
       </div>
-      <p className="mt-6 text-center text-sm text-cream/50">This page updates on its own. <Link to={`/confirmation/${order.id}`} className="underline">View receipt</Link></p>
+      <p className="mt-6 text-center text-sm text-cream/50">This page updates on its own. <Link to={orderPath('confirmation', order.id, token)} className="underline">View receipt</Link></p>
     </div>
   )
 }

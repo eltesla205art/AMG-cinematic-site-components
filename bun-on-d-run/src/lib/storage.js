@@ -1,10 +1,6 @@
-// Demo persistence layer. Everything the marketing site, ordering app and owner
-// dashboard share goes through here, so swapping to a real backend is one file.
-//
-// TODO(production): replace localStorage with Supabase (or Firebase). Each
-// key below maps to a table: bod.orders -> orders, bod.menu -> menu_items,
-// bod.info -> store_info, bod.activity -> activity_log. Use realtime
-// subscriptions in place of the 'storage' / CHANGE_EVENT listeners.
+// localStorage helpers. The cart and "my orders" always live here (they're per
+// device). Menu, info, orders and activity also live here in demo mode; in
+// Supabase mode those go through src/lib/backend/supabase.js instead.
 import { useEffect, useState, useCallback } from 'react'
 
 export const KEYS = {
@@ -14,6 +10,7 @@ export const KEYS = {
   menu: 'bod.menu',
   info: 'bod.info',
   activity: 'bod.activity',
+  myOrders: 'bod.myOrders', // { [orderId]: trackToken } (Supabase mode)
 }
 
 const CHANGE_EVENT = 'bod:storage'

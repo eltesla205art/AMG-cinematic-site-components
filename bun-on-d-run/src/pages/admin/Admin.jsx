@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Logo from '../../components/Logo'
 import Login from './Login'
@@ -7,8 +7,8 @@ import OrdersBoard from './OrdersBoard'
 import MenuManager from './MenuManager'
 import InfoEditor from './InfoEditor'
 import ActivityLog from './ActivityLog'
-import { currentSession, logout } from './auth'
-import { logActivity } from '../../lib/store'
+import { backend } from '../../lib/backend'
+import { MODE } from '../../lib/store'
 
 const TABS = [
   { id: 'orders', label: 'Orders' },
@@ -18,13 +18,26 @@ const TABS = [
 ]
 
 export default function Admin() {
-  const [user, setUser] = useState(currentSession)
+  const [user, setUser] = useState(undefined) // undefined = still checking
   const [tab, setTab] = useState('orders')
   const [newCount, setNewCount] = useState(0)
   const onNewOrders = useCallback((n) => setNewCount(n), [])
 
+  useEffect(() => {
+    backend.getSession().then((s) => setUser(s || null))
+  }, [])
+
+  if (user === undefined) {
+    return <div className="grid min-h-dvh place-items-center text-cream/60" aria-busy="true">Checking your login…</div>
+  }
   if (!user) {
-    return <Login onLogin={(s) => { setUser(s); logActivity(s.name, 'Logged in') }} />
+    return <Login onLogin={(s) => { setUser(s); backend.logActivity('Logged in').catch(() => {}) }} />
+  }
+
+  async function logOut() {
+    await backend.logActivity('Logged out').catch(() => {})
+    await backend.signOut()
+    setUser(null)
   }
 
   return (
@@ -35,7 +48,7 @@ export default function Admin() {
           <div className="flex items-center gap-3 text-sm">
             <span className="hidden text-cream/70 sm:inline">{user.name}</span>
             <Link to="/" className="hidden underline text-cream/70 hover:text-cream sm:inline">View site</Link>
-            <button onClick={() => { logActivity(user.name, 'Logged out'); logout(); setUser(null) }} className="btn-dark py-2 text-lg">Log out</button>
+            <button onClick={logOut} className="btn-dark py-2 text-lg">Log out</button>
           </div>
         </div>
         <nav aria-label="Dashboard" className="mx-auto hidden max-w-6xl gap-2 px-4 pb-3 md:flex">
@@ -49,11 +62,16 @@ export default function Admin() {
       </header>
 
       <main className="mx-auto grid max-w-6xl gap-8 px-4 pt-6">
+        {MODE === 'local' && (
+          <p className="rounded-lg border border-flame/40 bg-flame/10 p-3 text-sm text-cream/80">
+            Demo mode: orders and changes are saved in this browser only. Connect Supabase (see README) to take real orders.
+          </p>
+        )}
         <Stats />
         {/* Keep the board mounted so new-order chimes still fire on other tabs. */}
-        <div hidden={tab !== 'orders'}><OrdersBoard user={user} onNewOrders={onNewOrders} /></div>
-        {tab === 'menu' && <MenuManager user={user} />}
-        {tab === 'info' && <InfoEditor user={user} />}
+        <div hidden={tab !== 'orders'}><OrdersBoard onNewOrders={onNewOrders} /></div>
+        {tab === 'menu' && <MenuManager />}
+        {tab === 'info' && <InfoEditor />}
         {tab === 'log' && <ActivityLog />}
       </main>
 

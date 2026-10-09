@@ -2,14 +2,30 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/Cart'
 import { CartTotals } from '../components/CartDrawer'
-import { useInfo } from '../lib/store'
+import { orderPath, rememberOrder, useInfo } from '../lib/store'
+import { backend } from '../lib/backend'
 import { pickupSlots } from '../lib/hours'
-import { placeOrder } from '../lib/orders'
 import { isValidPhone, money, time } from '../lib/format'
 
+// Pickup slots depend on store hours, so the form only mounts once they've loaded.
 export default function Checkout() {
+  const [info, { loading }] = useInfo()
+  if (loading) {
+    return (
+      <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-8 md:px-8" aria-busy="true">
+        <div className="skeleton h-16 w-64" />
+        <div className="mt-8 grid gap-8 lg:grid-cols-[1.4fr_1fr]">
+          <div className="skeleton h-96" />
+          <div className="skeleton h-72" />
+        </div>
+      </div>
+    )
+  }
+  return <CheckoutForm info={info} />
+}
+
+function CheckoutForm({ info }) {
   const cart = useCart()
-  const [info] = useInfo()
   const navigate = useNavigate()
   const { asap, slots } = useMemo(() => pickupSlots(info.hours), [info.hours])
 
@@ -52,17 +68,17 @@ export default function Checkout() {
       // server-side, confirm it, and only place the order once payment succeeds.
       // For now every order is "Pay at pickup".
       const isAsap = form.pickup === 'asap'
-      const order = placeOrder({
+      const { id, token } = await backend.placeOrder({
         customer: { name: form.name.trim(), phone: form.phone.trim(), notes: form.notes.trim() },
-        pickup: { asap: isAsap, at: isAsap ? Date.now() + 15 * 60_000 : Number(form.pickup) },
-        lines: cart.lines.map(({ key, itemId, name, price, qty, options }) => ({ key, itemId, name, price, qty, options })),
-        totals: cart.totals,
+        pickup: isAsap ? { asap: true } : { asap: false, at: Number(form.pickup) },
+        lines: cart.lines,
       })
+      rememberOrder(id, token)
       cart.clear()
-      navigate(`/confirmation/${order.id}`)
+      navigate(orderPath('confirmation', id, token))
     } catch (err) {
       console.error(err)
-      setFailure("Something stalled on our end and your order didn't go through. Please try again, or give us a call.")
+      setFailure(err?.message || "Something stalled on our end and your order didn't go through. Please try again, or give us a call.")
       setSubmitting(false)
     }
   }

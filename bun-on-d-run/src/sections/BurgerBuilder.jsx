@@ -13,11 +13,12 @@ export default function BurgerBuilder() {
   const reduced = useReducedMotion()
   const cart = useCart()
   const toast = useToast()
-  const [menu] = useMenu()
+  const [menu, { loading: menuLoading }] = useMenu()
   const byo = menu.find((m) => m.id === 'build-your-own')
 
   const layers = useMemo(() => builderLayers(sel), [sel])
-  const price = builderPrice(sel)
+  const base = byo?.price ?? BASE_PRICE
+  const price = builderPrice(sel, base)
   const toggle = (id) => setSel((s) => ({ ...s, [id]: !s[id] }))
   const toppings = INGREDIENTS.filter((i) => !i.kind && !i.group)
   const sauces = INGREDIENTS.filter((i) => i.group === 'Sauces')
@@ -25,7 +26,7 @@ export default function BurgerBuilder() {
 
   function addToOrder() {
     if (!byo?.available) return
-    cart.add({ ...byo, name: 'Custom Smash', price }, 1, builderLabel(sel))
+    cart.add({ ...byo, name: 'Custom Smash', price }, 1, builderLabel(sel), sel)
     toast('Added! Your custom smash is on the grid.')
   }
 
@@ -49,7 +50,7 @@ export default function BurgerBuilder() {
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <p className="font-display text-2xl tracking-[.2em] text-flame">Pit Crew Mode</p>
         <h2 id="builder-title" className="section-title">Build Your Burger</h2>
-        <p className="mt-3 max-w-xl text-cream/70">Tap to stack. Every topping drops onto your burger live. Starts at {money(BASE_PRICE)} for a single smash on a toasted bun.</p>
+        <p className="mt-3 max-w-xl text-cream/70">Tap to stack. Every topping drops onto your burger live. Starts at {money(base)} for a single smash on a toasted bun.</p>
 
         <div className="mt-10 grid gap-8 lg:grid-cols-[1.1fr_1fr]">
           <div className="relative h-[360px] rounded-3xl bg-[radial-gradient(circle_at_50%_60%,rgba(255,107,0,.18),transparent_60%)] sm:h-[460px]">
@@ -79,7 +80,7 @@ export default function BurgerBuilder() {
               <div className="mt-3 flex items-center justify-between gap-4">
                 <p className="font-display text-5xl tabular-nums tracking-wide" aria-live="polite">{money(price)}</p>
                 <button onClick={addToOrder} disabled={!byo?.available} className="btn-red text-2xl">
-                  {byo?.available ? 'Add to Order' : 'Builder Paused'}
+                  {byo?.available ? 'Add to Order' : menuLoading ? 'Loading…' : 'Builder Paused'}
                 </button>
               </div>
               <button onClick={() => setSel({})} className="mt-3 text-sm text-cream/60 underline hover:text-cream">Start from a plain single</button>

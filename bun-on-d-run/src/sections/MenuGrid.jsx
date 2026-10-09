@@ -6,7 +6,7 @@ import { useToast } from '../context/Toast'
 import { money } from '../lib/format'
 
 export default function MenuGrid() {
-  const [menu] = useMenu()
+  const [menu, { loading }] = useMenu()
   const cart = useCart()
   const toast = useToast()
   const featured = menu.filter((m) => m.featured && m.available)
@@ -22,7 +22,11 @@ export default function MenuGrid() {
           <Link to="/order" className="btn-ghost">Full Menu →</Link>
         </div>
 
-        {featured.length === 0 ? (
+        {loading && !menu.length ? (
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+            {[0, 1, 2].map((i) => <div key={i} className="skeleton aspect-[4/5]" />)}
+          </div>
+        ) : featured.length === 0 ? (
           <p className="mt-10 text-cream/60">The menu is in the pits. Check back shortly.</p>
         ) : (
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

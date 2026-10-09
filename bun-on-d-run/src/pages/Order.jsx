@@ -41,7 +41,7 @@ function ItemCard({ item }) {
 }
 
 export default function Order() {
-  const [menu] = useMenu()
+  const [menu, { loading, error }] = useMenu()
   const [tab, setTab] = useState('all')
   const [q, setQ] = useState('')
 
@@ -81,7 +81,22 @@ export default function Order() {
         </div>
       </div>
 
-      {groups.length === 0 ? (
+      {error && !menu.length ? (
+        <div className="card mt-10 p-10 text-center" role="alert">
+          <p className="font-display text-4xl tracking-wide">Red flag.</p>
+          <p className="mt-2 text-cream/60">We couldn't load the menu. {error.message}</p>
+          <button onClick={() => window.location.reload()} className="btn-red mt-5">Try Again</button>
+        </div>
+      ) : loading && !menu.length ? (
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true" aria-label="Loading menu">
+          {Array.from({ length: 6 }, (_, i) => (
+            <div key={i} className="card overflow-hidden">
+              <div className="skeleton aspect-[16/10] rounded-none" />
+              <div className="space-y-3 p-4"><div className="skeleton h-7 w-2/3" /><div className="skeleton h-4" /><div className="skeleton h-10" /></div>
+            </div>
+          ))}
+        </div>
+      ) : groups.length === 0 ? (
         <div className="card mt-10 p-10 text-center">
           <p className="font-display text-4xl tracking-wide">No matches on this lap.</p>
           <p className="mt-2 text-cream/60">{q ? `Nothing matches "${q}". Try another search.` : 'Nothing available in this category right now.'}</p>

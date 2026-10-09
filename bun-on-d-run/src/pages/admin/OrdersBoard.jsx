@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { useOrders, logActivity } from '../../lib/store'
-import { STATUSES, setOrderStatus, statusIndex } from '../../lib/orders'
+import { useOrders } from '../../lib/store'
+import { backend } from '../../lib/backend'
+import { STATUSES, statusIndex } from '../../lib/orders'
 import { dateTime, money, telHref, time } from '../../lib/format'
 
 function beep() {
@@ -28,8 +29,10 @@ const STATUS_STYLE = {
   completed: 'bg-white/10 text-cream/60',
 }
 
-export default function OrdersBoard({ user, onNewOrders }) {
-  const [orders] = useOrders()
+export default function OrdersBoard({ onNewOrders }) {
+  const [orders, { loading, error }] = useOrders()
+  const [busy, setBusy] = useState(null)
+  const [failure, setFailure] = useState('')
   const [view, setView] = useState('active')
   const [sound, setSound] = useState(true)
   const seen = useRef(null)
@@ -37,6 +40,7 @@ export default function OrdersBoard({ user, onNewOrders }) {
 
   // Badge + chime for orders that arrive while the board is open.
   useEffect(() => {
+    if (loading) return
     const ids = orders.map((o) => o.id)
     if (seen.current == null) {
       seen.current = new Set(ids)
@@ -48,7 +52,7 @@ export default function OrdersBoard({ user, onNewOrders }) {
       setFresh((f) => new Set([...f, ...incoming]))
       if (sound) beep()
     }
-  }, [orders, sound])
+  }, [orders, loading, sound])
 
   useEffect(() => onNewOrders?.(fresh.size), [fresh, onNewOrders])
 
@@ -56,10 +60,18 @@ export default function OrdersBoard({ user, onNewOrders }) {
     .filter((o) => (view === 'active' ? o.status !== 'completed' : o.status === 'completed'))
     .sort((a, b) => b.createdAt - a.createdAt)
 
-  function move(o, status) {
-    setOrderStatus(o.id, status, user.username)
-    logActivity(user.name, `Order ${o.id}: ${STATUSES[statusIndex(o.status)].owner} → ${STATUSES[statusIndex(status)].owner}`)
-    setFresh((f) => { const n = new Set(f); n.delete(o.id); return n })
+  async function move(o, status) {
+    setBusy(o.id)
+    setFailure('')
+    try {
+      await backend.setOrderStatus(o.id, status)
+      await backend.logActivity(`Order ${o.id}: ${STATUSES[statusIndex(o.status)].owner} → ${STATUSES[statusIndex(status)].owner}`)
+      setFresh((f) => { const n = new Set(f); n.delete(o.id); return n })
+    } catch (err) {
+      setFailure(`Couldn't update ${o.id}: ${err.message}`)
+    } finally {
+      setBusy(null)
+    }
   }
 
   return (
@@ -76,7 +88,14 @@ export default function OrdersBoard({ user, onNewOrders }) {
         </div>
       </div>
 
-      {list.length === 0 ? (
+      {failure && <p role="alert" className="mt-4 rounded-lg bg-racing/15 p-3">{failure}</p>}
+      {error && <p role="alert" className="mt-4 rounded-lg bg-racing/15 p-3">Live orders are having trouble loading: {error.message}</p>}
+      {loading && !orders.length ? (
+        <div className="mt-4 grid gap-4 lg:grid-cols-2" aria-busy="true">
+          <div className="skeleton h-64" />
+          <div className="skeleton h-64" />
+        </div>
+      ) : list.length === 0 ? (
         <div className="card mt-4 p-10 text-center text-cream/60">
           {view === 'active' ? 'No active orders. Quiet on the track.' : 'No completed orders yet.'}
         </div>
@@ -113,9 +132,9 @@ export default function OrdersBoard({ user, onNewOrders }) {
                   <p className="font-display text-3xl">{money(o.totals.total)}</p>
                   <div className="flex gap-2">
                     {idx > 0 && o.status !== 'completed' && (
-                      <button onClick={() => move(o, STATUSES[idx - 1].id)} className="btn-dark px-4 text-lg" aria-label={`Move ${o.id} back to ${STATUSES[idx - 1].owner}`}>Back</button>
+                      <button onClick={() => move(o, STATUSES[idx - 1].id)} disabled={busy === o.id} className="btn-dark px-4 text-lg" aria-label={`Move ${o.id} back to ${STATUSES[idx - 1].owner}`}>Back</button>
                     )}
-                    {next && <button onClick={() => move(o, next.id)} className="btn-red text-xl">Mark {next.owner}</button>}
+                    {next && <button onClick={() => move(o, next.id)} disabled={busy === o.id} className="btn-red text-xl">{busy === o.id ? 'Saving…' : `Mark ${next.owner}`}</button>}
                   </div>
                 </div>
               </li>

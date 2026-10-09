@@ -1,6 +1,9 @@
 // 3D Burger Builder ingredients. `layer` drives the Three.js model;
 // `price` feeds the live calculator and the cart.
-export const BASE_PRICE = 7.99 // single smash patty, toasted bun
+// Default base (single smash patty, toasted bun). The live base is the
+// 'build-your-own' menu item's price, which the owner can change.
+// Keep INGREDIENTS in sync with builder_quote() in supabase/schema.sql.
+export const BASE_PRICE = 7.99
 
 export const INGREDIENTS = [
   { id: 'patty', name: 'Extra Patty', price: 2.5, max: 2, kind: 'count' },
@@ -18,11 +21,11 @@ export const INGREDIENTS = [
 
 export const CLASSIC = { patty: 0, cheese: true, lettuce: true, tomato: true, pickles: true, drun: true }
 
-export function builderPrice(sel) {
+export function builderPrice(sel, base = BASE_PRICE) {
   return INGREDIENTS.reduce((sum, ing) => {
     const v = sel[ing.id]
     return sum + (ing.kind === 'count' ? (v || 0) * ing.price : v ? ing.price : 0)
-  }, BASE_PRICE)
+  }, base)
 }
 
 export function builderLabel(sel) {
