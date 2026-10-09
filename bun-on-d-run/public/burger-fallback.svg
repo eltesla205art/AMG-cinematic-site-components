@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320" role="img" aria-label="Smash burger illustration">
+  <defs>
+    <radialGradient id="bun" cx="50%" cy="30%" r="70%"><stop offset="0" stop-color="#F2B65E"/><stop offset="1" stop-color="#C47A2C"/></radialGradient>
+  </defs>
+  <ellipse cx="200" cy="290" rx="150" ry="16" fill="#000" opacity=".45"/>
+  <rect x="62" y="226" width="276" height="50" rx="22" fill="url(#bun)"/>
+  <rect x="52" y="196" width="296" height="38" rx="18" fill="#4A2412"/>
+  <path d="M60 196h280l-30 26-30-18-40 28-30-26-40 22-34-24-34 18z" fill="#FFC233"/>
+  <path d="M48 180c30 14 60-6 90 6s60-8 92 4 60-6 92 4 30 2 30 2l-6 14H54z" fill="#5FB342"/>
+  <ellipse cx="140" cy="180" rx="46" ry="10" fill="#E0322A"/><ellipse cx="260" cy="180" rx="46" ry="10" fill="#E0322A"/>
+  <path d="M60 172C60 96 128 52 200 52s140 44 140 120z" fill="url(#bun)"/>
+  <g fill="#FFF3D6"><ellipse cx="150" cy="96" rx="6" ry="3"/><ellipse cx="200" cy="80" rx="6" ry="3"/><ellipse cx="250" cy="98" rx="6" ry="3"/><ellipse cx="175" cy="124" rx="6" ry="3"/><ellipse cx="228" cy="128" rx="6" ry="3"/><ellipse cx="120" cy="136" rx="6" ry="3"/><ellipse cx="282" cy="136" rx="6" ry="3"/></g>
+</svg>
