@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { scroll-behavior: smooth; }
+  body { min-height: 100dvh; }
+  ::selection { background: #E10600; color: #FFF8E7; }
+  :focus-visible { outline: 3px solid #FF6B00; outline-offset: 2px; border-radius: 6px; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  }
+}
+
+@layer components {
+  .checkered {
+    height: 18px;
+    background-color: #FFF8E7;
+    background-image: conic-gradient(#0A0A0B 25%, transparent 0 50%, #0A0A0B 0 75%, transparent 0);
+    background-size: 18px 18px;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3 font-display text-xl tracking-wide transition
+           active:scale-[.97] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-red { @apply btn bg-racing text-cream hover:bg-racing-dark hover:-translate-y-px shadow-[0_8px_24px_-8px_rgba(225,6,0,.6)]; }
+  .btn-ghost { @apply btn border-2 border-cream/80 text-cream hover:bg-cream hover:text-asphalt; }
+  .btn-dark { @apply btn bg-asphalt-700 text-cream hover:bg-asphalt-600; }
+  .card { @apply rounded-2xl border border-white/10 bg-asphalt-800; }
+  .input { @apply w-full rounded-lg border border-white/15 bg-asphalt-700 px-4 py-3 text-cream placeholder:text-cream/40 focus:border-flame focus:outline-none; }
+  .label { @apply mb-1 block text-sm font-semibold text-cream/80; }
+  .skeleton { @apply rounded-lg bg-[linear-gradient(90deg,#1E1E21_25%,#2A2A2E_50%,#1E1E21_75%)] bg-[length:200%_100%] animate-shimmer; }
+  .section-title { @apply font-display text-5xl leading-none tracking-wide sm:text-6xl md:text-7xl; }
+}
