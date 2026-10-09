@@ -1,5 +1,5 @@
 import { Component } from 'react'
-import { Link, Outlet, ScrollRestoration, createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { Link, Outlet, ScrollRestoration, createBrowserRouter, createHashRouter, RouterProvider } from 'react-router-dom'
 import Nav from './components/Nav'
 import Footer from './components/Footer'
 import Announcement from './components/Announcement'
@@ -67,7 +67,10 @@ function Root() {
   )
 }
 
-const router = createBrowserRouter([
+// Hash URLs (#/order) for static hosts without an SPA fallback: build with VITE_HASH_ROUTER=1.
+const createRouter = import.meta.env.VITE_HASH_ROUTER ? createHashRouter : createBrowserRouter
+
+const router = createRouter([
   {
     element: <Root />,
     children: [

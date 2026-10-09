@@ -22,7 +22,7 @@ class Boundary extends Component {
 }
 
 export function Fallback({ className = '' }) {
-  return <img src="/burger-fallback.svg" alt="Stylized smash burger" className={`mx-auto h-full max-h-[420px] w-auto object-contain ${className}`} />
+  return <img src={`${import.meta.env.BASE_URL}burger-fallback.svg`} alt="Stylized smash burger" className={`mx-auto h-full max-h-[420px] w-auto object-contain ${className}`} />
 }
 
 /**

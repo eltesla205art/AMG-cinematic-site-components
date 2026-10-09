@@ -4,7 +4,8 @@
 
 @layer base {
   html { scroll-behavior: smooth; }
-  body { min-height: 100dvh; }
+  :root { color-scheme: dark; }
+  body { min-height: 100dvh; @apply bg-asphalt text-cream font-body antialiased; }
   ::selection { background: #E10600; color: #FFF8E7; }
   :focus-visible { outline: 3px solid #FF6B00; outline-offset: 2px; border-radius: 6px; }
   @media (prefers-reduced-motion: reduce) {
