@@ -15,6 +15,18 @@ cd cinematic-site-components
 
 Then open `index.html` in your browser, or open any module file directly.
 
+## Claude Code Skill
+
+This repo ships a `cinematic-modules` skill that picks 2-3 modules for a brief and combines them into one finished single-file site.
+
+- **Inside this repo:** just run Claude Code here and use `/cinematic-modules <describe your site>`.
+- **From any project:** run `./install-skill.sh` once. It copies the skill and all 30 modules to `~/.claude/skills/cinematic-modules/`.
+
+```
+/cinematic-modules dark SaaS landing page with a scroll-driven hero
+/cinematic-modules --modules "text-mask, sticky-stack, kinetic-marquee" --name "Acme Corp"
+```
+
 ## The 30 Modules
 
 ### Scroll-Driven (9)
