@@ -6,6 +6,8 @@ A library of 30 cinematic website modules. Each is a standalone single-file HTML
 
 - `*.html` — 30 standalone cinematic module demos (just open in browser)
 - `index.html` — Visual hub page with animated mini-demos for each module
+- `.claude/skills/cinematic-modules/SKILL.md` — Skill that combines 2-3 modules into a full single-file site
+- `install-skill.sh` — Installs the skill (plus module files) globally to `~/.claude/skills/`
 
 ## Module Categories
 
